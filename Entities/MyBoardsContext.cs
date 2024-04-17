@@ -21,7 +21,7 @@ public class MyBoardsContext : DbContext
         modelBuilder.Entity<WorkItemState>()
         .Property(wi => wi.State)
         .IsRequired()
-        .HasMaxLength(50);
+        .HasMaxLength(60);
 
         modelBuilder.Entity<Epic>()
         .Property(e => e.EndDate).HasPrecision(3);
