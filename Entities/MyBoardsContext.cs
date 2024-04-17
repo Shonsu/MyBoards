@@ -8,6 +8,9 @@ public class MyBoardsContext : DbContext
     {
     }
     public DbSet<WorkItem> WorkItems { get; set; }
+    public DbSet<Issue> Issues { get; set; }
+    public DbSet<Epic> Epics { get; set; }
+    public DbSet<Task> Tasks { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Tag> Tags { get; set; }
     public DbSet<Comment> Comments { get; set; }
@@ -15,20 +18,23 @@ public class MyBoardsContext : DbContext
     public DbSet<WorkItemState> WorkItemStates { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        //base.OnModelCreating(modelBuilder);
-        // creating composite key example
-        // modelBuilder.Entity<User>()
-        // .HasKey(u => new { u.LastName, u.Email });
-
         modelBuilder.Entity<WorkItemState>()
         .Property(wi => wi.State)
         .IsRequired()
         .HasMaxLength(50);
 
-        // modelBuilder.Entity<WorkItemState>()
-        // .HasMany(wis=>wis.WorkItems)
-        // .WithOne(wi=>wi.State)
-        // .HasForeignKey(wi=>wi.StateId);
+        modelBuilder.Entity<Epic>()
+        .Property(e => e.EndDate).HasPrecision(3);
+
+        modelBuilder.Entity<Issue>()
+        .Property(wi => wi.Efford).HasColumnType("decimal(5,2)");
+
+        modelBuilder.Entity<Task>(t =>
+            {
+                t.Property(wi => wi.Activity).HasMaxLength(200);
+                t.Property(wi => wi.RemaningWork).HasPrecision(14, 2);
+            }
+        );
 
         modelBuilder.Entity<WorkItem>()
         .Property(wi => wi.Area)
@@ -36,12 +42,8 @@ public class MyBoardsContext : DbContext
 
         modelBuilder.Entity<WorkItem>(eb =>
             {
-                eb.HasOne(wi=>wi.State).WithMany().HasForeignKey(wi=>wi.StateId);
+                eb.HasOne(wi => wi.State).WithMany().HasForeignKey(wi => wi.StateId);
                 eb.Property(wi => wi.IterationPath).HasColumnName("Iteration_Path");
-                eb.Property(wi => wi.EndDate).HasPrecision(3);
-                eb.Property(wi => wi.Efford).HasColumnType("decimal(5,2)");
-                eb.Property(wi => wi.Activity).HasMaxLength(200);
-                eb.Property(wi => wi.RemaningWork).HasPrecision(14, 2);
                 eb.Property(wi => wi.Priority).HasDefaultValue(1);
                 eb.HasMany(wi => wi.Comments).WithOne(c => c.WorkItem).HasForeignKey(c => c.WorkItemId);
                 eb.HasOne(wi => wi.Author).WithMany(a => a.WorkItems).HasForeignKey(wi => wi.AuthorId);
@@ -51,22 +53,22 @@ public class MyBoardsContext : DbContext
                         wit =>
                         {
                             wit.HasKey(x => new { x.TagId, x.WorkItemId });
-                            wit.Property(x => x.PublicationDate).HasDefaultValueSql("getutcdate()");
+                            wit.Property(x => x.PublicationDate).HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
                         });
             }
         );
+
         modelBuilder.Entity<Comment>(eb =>
             {
-                eb.Property(c => c.CreatedDate).HasDefaultValueSql("getutcdate()");
+                eb.Property(c => c.CreatedDate).HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
                 eb.Property(c => c.UpdateDate).ValueGeneratedOnUpdate();
             }
         );
+        
         modelBuilder.Entity<User>()
         .HasOne(u => u.Adress)
         .WithOne(a => a.User)
         .HasForeignKey<Adress>(a => a.UserId);
 
-        // modelBuilder.Entity<WorkItemTag>()
-        // .HasKey(wit => new { wit.TagId, wit.WorkItemId });
     }
 }
