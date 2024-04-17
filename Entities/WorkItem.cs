@@ -8,8 +8,8 @@ public class WorkItem
 {
     public int Id { get; set; }     // either WorkItemId or [Key] annotation for primary key create
     // Annotation replaced by Fluent API in dbcontext configuration file
-    // [Required]
-    public string State { get; set; }
+    public WorkItemState State { get; set; }
+    public int StateId { get; set; }
     // [Column(TypeName = "varchar(200)")]
     public string Area { get; set; }
     // [Column("Iteration_Path")]
@@ -27,7 +27,6 @@ public class WorkItem
     public string Activity { get; set; }
     // [Precision(14, 2)]
     public decimal RemaningWork { get; set; }
-
     public string Type { get; set; }
     // public IEnumerable<Comment> Comments { get; set; }
     public List<Comment> Comments { get; set; } = new List<Comment>();
