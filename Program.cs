@@ -8,8 +8,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<MyBoardsContext>(option =>
-    option.UseMySql(builder.Configuration.GetConnectionString("MyBoardsConnectionString"),
-                    ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("MyBoardsConnectionString")))
+    option.UseMySql(
+        builder.Configuration.GetConnectionString("MyBoardsConnectionString"),
+        ServerVersion.AutoDetect(
+            builder.Configuration.GetConnectionString("MyBoardsConnectionString")
+        )
+    )
 );
 var app = builder.Build();
 
@@ -20,4 +24,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+var scope = app.Services.CreateScope();
+var dbContext = scope.ServiceProvider.GetService<MyBoardsContext>();
+IEnumerable<string> pendingMigrations = dbContext.Database.GetPendingMigrations();
+if (pendingMigrations.Any())
+{
+    dbContext.Database.Migrate();
+}
 app.Run();
