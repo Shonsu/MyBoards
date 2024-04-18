@@ -20,6 +20,13 @@ public class MyBoardsContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<WorkItemState>().Property(wi => wi.State).IsRequired().HasMaxLength(60);
+        modelBuilder
+            .Entity<WorkItemState>()
+            .HasData(
+                new WorkItemState { Id = 1, State = "To Do" },
+                new WorkItemState { Id = 2, State = "In progress" },
+                new WorkItemState { Id = 3, State = "Done" }
+            );
 
         modelBuilder.Entity<Epic>().Property(e => e.EndDate).HasPrecision(3);
 
