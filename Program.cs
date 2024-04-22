@@ -270,7 +270,18 @@ app.MapDelete(
         List<Comment> comments = await db.Comments.Where(c => c.AuthorId == userId).ToListAsync();
         db.Comments.RemoveRange(comments);
         await db.SaveChangesAsync();
-        
+
+        db.Users.Remove(user);
+        await db.SaveChangesAsync();
+    }
+);
+app.MapDelete(
+    "userwithcomments/{userId}",
+    async ([FromRoute] Guid userId, MyBoardsContext db) =>
+    {
+        // with OnDelete(DeleteBehavior.ClientCascade) EF will take care about deleting user's comments too
+        User user = await db.Users.Include(u => u.Comments).FirstAsync(u => u.Id == userId);
+
         db.Users.Remove(user);
         await db.SaveChangesAsync();
     }
