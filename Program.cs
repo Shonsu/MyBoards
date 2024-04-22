@@ -159,5 +159,63 @@ app.MapPatch(
         return epic;
     }
 );
+app.MapPost(
+    "tag",
+    async ([FromBody] TagDto tagDto, MyBoardsContext db) =>
+    {
+        Tag newTag = new Tag { Value = tagDto.Value };
+        await db.Tags.AddAsync(newTag);
+        //await db.AddAsync(newTag);
+        await db.SaveChangesAsync();
+        return newTag;
+    }
+);
+app.MapPost(
+    "tagrange",
+    async ([FromBody] List<TagDto> tagDtos, MyBoardsContext db) =>
+    {
+        List<Tag> tags = new List<Tag>();
+        foreach (TagDto tagDto in tagDtos)
+        {
+            tags.Add(new Tag { Value = tagDto.Value });
+        }
+        await db.Tags.AddRangeAsync(tags);
+        // await db.AddRangeAsync(tags);
+        await db.SaveChangesAsync();
+        return tags;
+    }
+);
 
+app.MapPost(
+    "user",
+    async ([FromBody] UserAddressDto userAddressDto, MyBoardsContext db) =>
+    {
+        Adress adress = new Adress
+        {
+            City = userAddressDto.City,
+            PostaCode = userAddressDto.PostaCode,
+            Street = userAddressDto.Street,
+            Country = userAddressDto.Country
+        };
+        //User user = await db.Users.FindAsync(userId);
+        User user = new User
+        {
+            FullName = userAddressDto.FullName,
+            Email = userAddressDto.Email,
+            Adress = adress
+        };
+        await db.Users.AddAsync(user);
+        //await db.AddAsync(newTag);
+        await db.SaveChangesAsync();
+        return new UserAddressDto
+        {
+            FullName = user.FullName,
+            Email = user.Email,
+            Country = user.Adress.Country,
+            City = user.Adress.City,
+            Street = user.Adress.Street,
+            PostaCode = user.Adress.PostaCode
+        };
+    }
+);
 app.Run();
