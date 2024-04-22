@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyBoards;
@@ -8,6 +9,18 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// builder.Services.AddControllers().AddJsonOptions(options =>
+// {
+//     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+// options.JsonSerializerOptions.MaxDepth = 6;
+// options.JsonSerializerOptions.WriteIndented = true;
+// });
+builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+{
+    options.SerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+    //options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+});
 builder.Services.AddDbContext<MyBoardsContext>(option =>
     option.UseMySql(
         builder.Configuration.GetConnectionString("MyBoardsConnectionString"),
@@ -218,4 +231,21 @@ app.MapPost(
         };
     }
 );
+
+app.MapGet(
+    "user/{userId}",
+    async ([FromRoute] Guid userId, MyBoardsContext db) =>
+    {
+        User user = await db
+            .Users.Include(u => u.Comments)
+            .ThenInclude(c => c.WorkItem)
+            .Include(u => u.Adress)
+            .FirstAsync(u => u.Id == userId);
+        // List<Comment> comments = await db.Comments.Where(c => c.AuthorId == userId).ToListAsync();
+        // relation between user and comments is automatically created
+        // var userComments = user.Comments;
+        return user;
+    }
+);
+
 app.Run();
