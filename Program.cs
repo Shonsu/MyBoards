@@ -69,7 +69,11 @@ app.MapGet("tag", (MyBoardsContext db) => db.Tags.ToList());
 app.MapGet(
     "newestcomment",
     async ([FromQuery] int newest, MyBoardsContext db) =>
-        await db.Comments.OrderByDescending(c => c.CreatedDate).Take(newest).ToListAsync()
+        await db
+            .Comments.AsNoTracking()
+            .OrderByDescending(c => c.CreatedDate)
+            .Take(newest)
+            .ToListAsync()
 );
 app.MapGet(
     "comment",
@@ -101,8 +105,12 @@ app.MapGet(
     (MyBoardsContext db) =>
     {
         User user = db.Users.First(u => u.FullName == "User One");
-        Epic epic = db.Epics.First();
-        return new { epic, user };
+        var entries1 = db.ChangeTracker.Entries();
+        user.Email = "nowy@email.pl";
+        var entries2 = db.ChangeTracker.Entries();
+        db.SaveChanges();
+        //Epic epic = db.Epics.First();
+        return new { user };
     }
 );
 app.MapGet(
@@ -284,6 +292,16 @@ app.MapDelete(
 
         db.Users.Remove(user);
         await db.SaveChangesAsync();
+    }
+);
+app.MapDelete(
+    "workitem/{workitemId}",
+    ([FromRoute] int workitemId, MyBoardsContext db) =>
+    {
+        var workItem = new Epic() { Id = workitemId };
+        Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Epic> epic = db.Attach(workItem);
+        epic.State = EntityState.Deleted;
+        db.SaveChanges();
     }
 );
 
