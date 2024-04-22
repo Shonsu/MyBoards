@@ -247,5 +247,45 @@ app.MapGet(
         return user;
     }
 );
+app.MapDelete(
+    "workitemtag/{workItemId}/{workItemId2}",
+    async ([FromRoute] int workItemId, [FromRoute] int workItemId2, MyBoardsContext db) =>
+    {
+        List<WorkItemTag> workItemTags = await db
+            .WorkItemTag.Where(wit => wit.WorkItemId == workItemId)
+            .ToListAsync();
+        db.WorkItemTag.RemoveRange(workItemTags);
+
+        var wortItem = await db.WorkItems.FirstAsync(wi => wi.Id == workItemId2);
+        db.Remove(wortItem);
+
+        await db.SaveChangesAsync();
+    }
+);
+app.MapDelete(
+    "user/{userId}",
+    async ([FromRoute] Guid userId, MyBoardsContext db) =>
+    {
+        User user = await db.Users.FirstAsync(u => u.Id == userId);
+        List<Comment> comments = await db.Comments.Where(c => c.AuthorId == userId).ToListAsync();
+        db.Comments.RemoveRange(comments);
+        await db.SaveChangesAsync();
+        
+        db.Users.Remove(user);
+        await db.SaveChangesAsync();
+    }
+);
+
+// cascade delete
+// SELECT * FROM myboards.WorkItems WHERE Id = 21;
+// SELECT * FROM myboards.Comments WHERE WorkItemId = 21;
+// SELECT * FROM myboards.WorkItemTag WHERE WorkItemId = 21;
+// DELETE FROM myboards.WorkItems WHERE Id = 21;
+
+// SELECT * FROM myboards.Comments WHERE AuthorId = "6afc3a1d-cf04-4d8a-cbcf-08da10ab0e61";
+// SELECT * FROM WorkItems WHERE AuthorId = "6afc3a1d-cf04-4d8a-cbcf-08da10ab0e61";
+// SELECT * FROM Users WHERE Id = "6afc3a1d-cf04-4d8a-cbcf-08da10ab0e61";
+// DELETE FROM Comments WHERE AuthorId = "6afc3a1d-cf04-4d8a-cbcf-08da10ab0e61";
+// DELETE FROM Users WHERE Id = "6afc3a1d-cf04-4d8a-cbcf-08da10ab0e61";
 
 app.Run();
