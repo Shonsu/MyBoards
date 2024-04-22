@@ -127,4 +127,37 @@ app.MapGet(
         return new { userDetails, commentCount = topAuthor.Count };
     }
 );
+
+app.MapPut(
+    "epic/{epicId}",
+    async ([FromRoute] int epicId, [FromBody] EpicDto epicDto, MyBoardsContext db) =>
+    {
+        Epic epic = await db.Epics.FirstAsync(epic => epic.Id == epicId);
+        epic.Area = epicDto.Area;
+        epic.Priority = epicDto.Priority;
+        epic.StartDate = epicDto.StartDate;
+        await db.SaveChangesAsync();
+        return epic;
+    }
+);
+app.MapPatch(
+    "epic/{epicId}/state",
+    async ([FromRoute] int epicId, [FromBody] ChangeStateDto parameters, MyBoardsContext db) =>
+    {
+        Epic epic = await db.Epics.FirstAsync(epic => epic.Id == epicId);
+        if (parameters.StateId != null)
+        {
+            epic.StateId = (int)parameters.StateId;
+        }
+        else if (!string.IsNullOrEmpty(parameters.State))
+        {
+            var onHoldState = await db.WorkItemStates.FirstAsync(s => s.State == parameters.State);
+            epic.StateId = onHoldState.Id;
+            //epic.State = onHoldState;
+        }
+        await db.SaveChangesAsync();
+        return epic;
+    }
+);
+
 app.Run();
