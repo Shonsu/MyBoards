@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyBoards;
+using MySqlConnector;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -302,6 +303,41 @@ app.MapDelete(
         Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Epic> epic = db.Attach(workItem);
         epic.State = EntityState.Deleted;
         db.SaveChanges();
+    }
+);
+app.MapGet(
+    "rawsql",
+    (MyBoardsContext db) =>
+    {
+        int wiNumber = 82;
+        // var states = db
+        //     .WorkItemStates.FromSqlRaw(
+        //         @"SELECT wis.State, wis.Id, count(*) as number
+        //             FROM myboards.WorkItemStates as wis
+        //             JOIN myboards.WorkItems as wi on wis.Id = wi.StateId
+        //             GROUP BY wis.Id, wis.State
+        //             HAVING count(*) > @number",
+        //         new MySqlParameter("number", wiNumber)
+        //     )
+        //     .ToList();
+
+        var states = db
+            .WorkItemStates.FromSqlInterpolated(
+                $@"SELECT wis.State, wis.Id, count(*) as number
+                    FROM myboards.WorkItemStates as wis
+                    JOIN myboards.WorkItems as wi on wis.Id = wi.StateId 
+                    GROUP BY wis.Id, wis.State 
+                    HAVING count(*) > {wiNumber}"
+            )
+            .ToList();
+
+        db.Database.ExecuteSqlRaw(
+            @"
+            UPDATE Comments
+            SET UpdateDate = NOW()
+            WHERE AuthorId = '1930065b-4517-407f-cbee-08da10ab0e61'"
+        );
+        return states;
     }
 );
 
