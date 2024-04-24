@@ -340,6 +340,14 @@ app.MapGet(
         return states;
     }
 );
+app.MapGet(
+    "topAuthor",
+    async (MyBoardsContext db) =>
+    {
+        List<TopAuthor> topAuthors = await db.ViewTopAuthors.ToListAsync();
+        return topAuthors;
+    }
+);
 
 // cascade delete
 // SELECT * FROM myboards.WorkItems WHERE Id = 21;
@@ -353,4 +361,6 @@ app.MapGet(
 // DELETE FROM Comments WHERE AuthorId = "6afc3a1d-cf04-4d8a-cbcf-08da10ab0e61";
 // DELETE FROM Users WHERE Id = "6afc3a1d-cf04-4d8a-cbcf-08da10ab0e61";
 
+// SELECT u.Id as id,  u.FullName as fullname, count(*) as WorkItemsCreated FROM myboards.Users as u
+// JOIN WorkItems as wi on wi.AuthorId = u.Id group by u.Id, u.FullName order by WorkItemsCreated desc LIMIT 5;
 app.Run();

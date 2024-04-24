@@ -17,6 +17,7 @@ public class MyBoardsContext : DbContext
     public DbSet<Adress> Adresses { get; set; }
     public DbSet<WorkItemState> WorkItemStates { get; set; }
     public DbSet<WorkItemTag> WorkItemTag { get; set; }
+    public DbSet<TopAuthor> ViewTopAuthors { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -78,6 +79,12 @@ public class MyBoardsContext : DbContext
                 .WithOne(c => c.Author)
                 .HasForeignKey(c => c.AuthorId)
                 .OnDelete(DeleteBehavior.ClientCascade);
+        });
+
+        modelBuilder.Entity<TopAuthor>(eb =>
+        {
+            eb.ToView("View_TopAuthors");
+            eb.HasNoKey();
         });
     }
 }
