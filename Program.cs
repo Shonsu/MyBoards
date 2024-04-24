@@ -23,12 +23,14 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =
     //options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
 });
 builder.Services.AddDbContext<MyBoardsContext>(option =>
-    option.UseMySql(
-        builder.Configuration.GetConnectionString("MyBoardsConnectionString"),
-        ServerVersion.AutoDetect(
-            builder.Configuration.GetConnectionString("MyBoardsConnectionString")
+    option
+        //.UseLazyLoadingProxies()
+        .UseMySql(
+            builder.Configuration.GetConnectionString("MyBoardsConnectionString"),
+            ServerVersion.AutoDetect(
+                builder.Configuration.GetConnectionString("MyBoardsConnectionString")
+            )
         )
-    )
 );
 var app = builder.Build();
 
@@ -349,13 +351,31 @@ app.MapGet(
     }
 );
 app.MapGet(
-    "direction/{addressId}",
+    "address/coordinate/{addressId}",
     async ([FromRoute] Guid addressId, MyBoardsContext db) =>
     {
         List<Adress> adresses = await db
             .Adresses.Where(a => a.Id == addressId && a.Coordinate.Latitude > 10) // without include Coordinate
             .ToListAsync();
         return adresses;
+    }
+);
+app.MapGet(
+    "user/{userId}/{withAddress}",
+    async ([FromRoute] Guid userId, [FromRoute] bool withAddress, MyBoardsContext db) =>
+    {
+        //var withAddress = true;
+        User user = await db.Users.FirstAsync(u => u.Id == userId);
+        if (withAddress)
+        {
+            var result = new
+            {
+                FullName = user.FullName,
+                Adress = $"{user.Adress.Street} {user.Adress.City}"
+            };
+            return result;
+        }
+        return new { FullName = user.FullName, Adress = "-" };
     }
 );
 

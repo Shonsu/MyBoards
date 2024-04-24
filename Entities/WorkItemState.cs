@@ -8,5 +8,5 @@ public class WorkItemState
     // [Required]
     // [MaxLength(50)]
     public string State { get; set; }
-    public List<WorkItem> WorkItems { get; set; }
+    public virtual List<WorkItem> WorkItems { get; set; }
 }

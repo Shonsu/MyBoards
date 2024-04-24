@@ -9,7 +9,7 @@ public class Adress
     public string City { get; set; }
     public string Street { get; set; }
     public string PostaCode { get; set; }
-    public User User { get; set; }
+    public virtual User User { get; set; }
     public Guid UserId { get; set; }
     // name of FK must be the same as coresponding relation
     // public User Person { get; set; }
