@@ -348,6 +348,16 @@ app.MapGet(
         return topAuthors;
     }
 );
+app.MapGet(
+    "direction/{addressId}",
+    async ([FromRoute] Guid addressId, MyBoardsContext db) =>
+    {
+        List<Adress> adresses = await db
+            .Adresses.Where(a => a.Id == addressId && a.Coordinate.Latitude > 10) // without include Coordinate
+            .ToListAsync();
+        return adresses;
+    }
+);
 
 // cascade delete
 // SELECT * FROM myboards.WorkItems WHERE Id = 21;

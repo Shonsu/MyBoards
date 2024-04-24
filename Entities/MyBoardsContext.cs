@@ -86,5 +86,15 @@ public class MyBoardsContext : DbContext
             eb.ToView("View_TopAuthors");
             eb.HasNoKey();
         });
+        modelBuilder
+            .Entity<Adress>()
+            .OwnsOne(
+                a => a.Coordinate,
+                cmb =>
+                {
+                    cmb.Property(c => c.Latitude).HasPrecision(18, 7);
+                    cmb.Property(c => c.Longitude).HasPrecision(18, 7);
+                }
+            );
     }
 }
