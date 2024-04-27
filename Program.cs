@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -24,13 +25,13 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =
 });
 builder.Services.AddDbContext<MyBoardsContext>(option =>
     option
-        //.UseLazyLoadingProxies()
-        .UseMySql(
-            builder.Configuration.GetConnectionString("MyBoardsConnectionString"),
-            ServerVersion.AutoDetect(
-                builder.Configuration.GetConnectionString("MyBoardsConnectionString")
-            )
+    //.UseLazyLoadingProxies()
+    .UseMySql(
+        builder.Configuration.GetConnectionString("MyBoardsConnectionString"),
+        ServerVersion.AutoDetect(
+            builder.Configuration.GetConnectionString("MyBoardsConnectionString")
         )
+    )
 );
 var app = builder.Build();
 
@@ -376,6 +377,41 @@ app.MapGet(
             return result;
         }
         return new { FullName = user.FullName, Adress = "-" };
+    }
+);
+app.MapGet(
+    "userwithpagination",
+    async ([AsParameters] PageQueryProperties pageQueryProperties, MyBoardsContext db) =>
+    {
+        var filter = pageQueryProperties.Filter;
+        string sortBy = pageQueryProperties.SortBy; // FullName Email null
+        bool sortByDescending = pageQueryProperties.SortByDescending;
+        int pageNumber = pageQueryProperties.PageNumber;
+        int pageSize = pageQueryProperties.PageSize;
+
+        IQueryable<User> query = db.Users.Where(u =>
+            string.IsNullOrEmpty(filter)
+            || u.FullName.ToLower().Contains(filter.ToLower())
+            || u.Email.ToLower().Contains(filter.ToLower())
+        );
+        int totalCount = query.Count();
+        if (!string.IsNullOrEmpty(sortBy))
+        {
+            // Expression<Func<User, object>> sortByExpression = user => user.Email;
+            var columnSelector = new Dictionary<string, Expression<Func<User, object>>>
+            {
+                { nameof(User.Email), user => user.Email },
+                { nameof(User.FullName), user => user.FullName }
+            };
+            var sortByExpression = columnSelector[sortBy];
+            query = sortByDescending
+                ? query.OrderByDescending(sortByExpression)
+                : query.OrderBy(sortByExpression);
+        }
+
+        var result = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+        var pageResult = new PageResult<User>(result, totalCount, pageSize, pageNumber);
+        return pageResult;
     }
 );
 
