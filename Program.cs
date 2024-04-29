@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyBoards;
-using MySqlConnector;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -274,6 +273,7 @@ app.MapDelete(
         await db.SaveChangesAsync();
     }
 );
+
 app.MapDelete(
     "user/{userId}",
     async ([FromRoute] Guid userId, MyBoardsContext db) =>
@@ -287,6 +287,7 @@ app.MapDelete(
         await db.SaveChangesAsync();
     }
 );
+
 app.MapDelete(
     "userwithcomments/{userId}",
     async ([FromRoute] Guid userId, MyBoardsContext db) =>
@@ -298,6 +299,7 @@ app.MapDelete(
         await db.SaveChangesAsync();
     }
 );
+
 app.MapDelete(
     "workitem/{workitemId}",
     ([FromRoute] int workitemId, MyBoardsContext db) =>
@@ -361,6 +363,7 @@ app.MapGet(
         return adresses;
     }
 );
+
 app.MapGet(
     "user/{userId}/{withAddress}",
     async ([FromRoute] Guid userId, [FromRoute] bool withAddress, MyBoardsContext db) =>
@@ -379,6 +382,7 @@ app.MapGet(
         return new { FullName = user.FullName, Adress = "-" };
     }
 );
+
 app.MapGet(
     "userwithpagination",
     async ([AsParameters] PageQueryProperties pageQueryProperties, MyBoardsContext db) =>
@@ -412,6 +416,31 @@ app.MapGet(
         var result = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
         var pageResult = new PageResult<User>(result, totalCount, pageSize, pageNumber);
         return pageResult;
+    }
+);
+
+app.MapGet(
+    "usersfrom",
+    async ([FromQuery] string country, MyBoardsContext db) =>
+    {
+        // var users = db
+        //     .Users.Include(u => u.Adress)
+        //     .Where(u => u.Adress.Country == country)
+        //     .Select(u=> u.FullName)
+        //     .ToListAsync();
+        var usersWithComments = await db
+            .Users.Include(u => u.Adress)
+            .Include(u => u.Comments)
+            .Where(u => u.Adress.Country == country)
+            .Select(u => new
+            {
+                u.FullName,
+                commentMessages = u.Comments.Select(c => c.Message).ToList()
+            })
+            //.Select(c=>c.Message)
+            .ToListAsync();
+        //var comments = users.SelectMany(u => u.Comments).Select(c=>c.Message);
+        return usersWithComments;
     }
 );
 
