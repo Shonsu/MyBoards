@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Security.Cryptography.X509Certificates;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MyBoards;
@@ -13,5 +14,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .WithOne(c => c.Author)
             .HasForeignKey(c => c.AuthorId)
             .OnDelete(DeleteBehavior.ClientCascade);
+        // builder.HasIndex(u => u.Email);
+        // in case of composite index from with two columns/properties
+        builder.HasIndex(u => new { u.Email, u.FullName });
     }
 }
