@@ -24,13 +24,13 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =
 });
 builder.Services.AddDbContext<MyBoardsContext>(option =>
     option
-    //.UseLazyLoadingProxies()
-    .UseMySql(
-        builder.Configuration.GetConnectionString("MyBoardsConnectionString"),
-        ServerVersion.AutoDetect(
-            builder.Configuration.GetConnectionString("MyBoardsConnectionString")
+        .UseLazyLoadingProxies()
+        .UseMySql(
+            builder.Configuration.GetConnectionString("MyBoardsConnectionString"),
+            ServerVersion.AutoDetect(
+                builder.Configuration.GetConnectionString("MyBoardsConnectionString")
+            )
         )
-    )
 );
 var app = builder.Build();
 
@@ -441,6 +441,24 @@ app.MapGet(
             .ToListAsync();
         //var comments = users.SelectMany(u => u.Comments).Select(c=>c.Message);
         return usersWithComments;
+    }
+);
+app.MapGet(
+    "nplusone",
+    async ([FromQuery] string country, MyBoardsContext db) =>
+    {
+        var users = await db
+            .Users.Where(u => u.Adress.Country.ToLower() == country.ToLower())
+            .Include(u => u.Comments)
+            .ToListAsync();
+        foreach (var user in users)
+        {
+            foreach (var comment in user.Comments)
+            {
+                // process (comment)
+            }
+        }
+        //return users;
     }
 );
 
