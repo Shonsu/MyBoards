@@ -48,6 +48,7 @@ if (pendingMigrations.Any())
 {
     dbContext.Database.Migrate();
 }
+DataGenerator.Seed(dbContext);
 
 List<User> users = dbContext.Users.ToList();
 if (users.Count == 0)
