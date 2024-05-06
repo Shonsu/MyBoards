@@ -3,8 +3,12 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyBoards;
+using Sieve.Models;
+using Sieve.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddScoped<ISieveProcessor, ApplicationSieveProcessor>();
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -462,6 +466,36 @@ app.MapGet(
             }
         }
         //return users;
+    }
+);
+app.MapPost(
+    "sieve",
+    async ([FromBody] SieveModel query, ISieveProcessor sieveProcessor, MyBoardsContext db) =>
+    {
+        var epics = db.Epics.Include(e => e.Author).AsQueryable();
+        var epicDtos = await sieveProcessor
+            .Apply(query, epics)
+            .Select(e => new EpicDTOSieve
+            {
+                Id = e.Id,
+                Area = e.Area,
+                Priority = e.Priority,
+                StartDate = e.StartDate,
+                AuthorFullName = e.Author.FullName
+            })
+            .ToListAsync();
+
+        int totalCount = await sieveProcessor
+            .Apply(query, epics, applyPagination: false, applySorting: false)
+            .CountAsync();
+
+        var result = new PageResult<EpicDTOSieve>(
+            epicDtos,
+            totalCount,
+            query.PageSize.Value,
+            query.Page.Value
+        );
+        return result;
     }
 );
 
