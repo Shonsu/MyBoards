@@ -9,7 +9,7 @@ using Sieve.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddScoped<ISieveProcessor, ApplicationSieveProcessor>();
-
+builder.Services.AddScoped<ISieveCustomFilterMethods, ApplicationSieveFilterMethods>();
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -474,14 +474,15 @@ app.MapPost(
     {
         var epics = db.Epics.Include(e => e.Author).AsQueryable();
         var epicDtos = await sieveProcessor
-            .Apply(query, epics)
+            .Apply(query, epics)   
             .Select(e => new EpicDTOSieve
             {
-                Id = e.Id,
+                Id = e.Id, 
                 Area = e.Area,
                 Priority = e.Priority,
                 StartDate = e.StartDate,
-                AuthorFullName = e.Author.FullName
+                AuthorFullName = e.Author.FullName,
+                StateId = e.StateId
             })
             .ToListAsync();
 

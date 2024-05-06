@@ -7,4 +7,5 @@ public class EpicDTOSieve
     public string Area { get; set; }
     public DateTime? StartDate { get; set; }
     public string AuthorFullName { get; set; }
+    public int StateId { get; set; }
 }
